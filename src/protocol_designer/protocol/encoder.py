@@ -20,8 +20,8 @@ from .fields import (
     raw_to_bytes,
 )
 from .layout import FieldSpan, crc_range, length_range
-from .model import Encoding, FieldType, FrameDefinition, ProtocolDefinition
-from .values import parse_hex_bytes, parse_int, to_hex
+from .model import Encoding, FrameDefinition, ProtocolDefinition
+from .values import parse_int, to_hex
 
 
 @dataclass
@@ -128,18 +128,7 @@ class Encoder:
         return EncodedFrame(fdef, data, spans, resolved)
 
     def _raw_value(self, f, value: Any, raw: bool):
-        if not raw:
-            return physical_to_raw(f, value, self.protocol)
-        try:
-            if f.type == FieldType.BYTES:
-                return parse_hex_bytes(value)
-            if f.type == FieldType.STRING:
-                return str(value)
-            if f.type in (FieldType.FLOAT32, FieldType.FLOAT64):
-                return float(value)
-            return parse_int(value)
-        except (TypeError, ValueError) as exc:
-            raise EncodeError(f"field '{f.name}': {exc}") from None
+        return physical_to_raw(f, value, self.protocol, raw=raw)
 
 
 def encode(protocol: ProtocolDefinition, frame: str, values: Optional[Mapping[str, Any]] = None, **kw) -> bytes:

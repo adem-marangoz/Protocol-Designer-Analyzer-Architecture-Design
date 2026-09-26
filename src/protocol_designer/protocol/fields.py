@@ -206,8 +206,14 @@ def default_physical(f: FieldDefinition) -> Any:
     return 0
 
 
-def physical_to_raw(f: FieldDefinition, value: Any, protocol: Optional[ProtocolDefinition]) -> Raw:
-    """Convert a user supplied (physical) value to the raw value to transmit."""
+def physical_to_raw(
+    f: FieldDefinition, value: Any, protocol: Optional[ProtocolDefinition], raw: bool = False
+) -> Raw:
+    """Convert a user supplied (physical) value to the raw value to transmit.
+
+    With ``raw=True`` numbers are taken as raw register values: scaling and the
+    physical min/max limits are skipped, but enum names and bit dicts still work.
+    """
     t = f.type
     try:
         if t == FieldType.BYTES:
@@ -229,6 +235,12 @@ def physical_to_raw(f: FieldDefinition, value: Any, protocol: Optional[ProtocolD
     except (ValueError, TypeError) as exc:
         raise EncodeError(f"field '{f.name}': {exc}") from None
 
+    if raw:
+        if t in FLOAT_SIZES:
+            return float(number)
+        if isinstance(number, float) and not number.is_integer():
+            raise EncodeError(f"field '{f.name}': raw value {number} is not an integer")
+        return int(number)
     _check_limits(f, number)
     if t in FLOAT_SIZES:
         return (float(number) - f.value_offset) / f.scale
