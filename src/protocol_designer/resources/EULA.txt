@@ -1,0 +1,68 @@
+END-USER LICENSE AGREEMENT
+Protocol Designer & Analyzer
+
+Please read this End-User License Agreement ("Agreement") carefully before
+installing or using Protocol Designer & Analyzer (the "Software"). By
+installing, copying or otherwise using the Software you agree to be bound by
+the terms of this Agreement. If you do not agree, do not install or use the
+Software.
+
+1. GRANT OF LICENSE
+   The licensor grants you a non-exclusive, non-transferable license to
+   install and use the Software on computers that you own or control, for
+   the purpose of designing, analysing, testing and generating code for
+   communication protocols.
+
+2. RESTRICTIONS
+   You may not (a) sell, rent, lease or sublicense the Software; (b) remove
+   or alter any copyright, trademark or proprietary notices; (c) distribute
+   the Software except as permitted by the licensor. Reverse engineering is
+   not permitted except to the extent expressly allowed by applicable law.
+
+3. OWNERSHIP / INTELLECTUAL PROPERTY
+   The Software is licensed, not sold. The licensor retains all rights,
+   title and interest in the Software. Protocol definitions, test reports
+   and source code that you create or generate with the Software belong to
+   you, and you may use them without restriction.
+
+4. THIRD-PARTY COMPONENTS AND THEIR LICENSES
+   The Software includes third-party open-source components (such as Qt /
+   PySide6, pyserial and python-can) that are licensed under their own
+   terms. Those terms are listed in THIRD_PARTY_LICENSES.txt, installed with
+   the Software and available from Help > Third-party Licenses. Nothing in
+   this Agreement limits your rights under those licenses.
+
+5. DATA AND PRIVACY
+   The Software works locally. It does not collect personal data and does
+   not send data over the Internet. Communication only takes place over the
+   interfaces (serial ports, network sockets, CAN adapters) that you
+   configure. Settings, logs and your files are stored on your computer.
+
+6. DISCLAIMER OF WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+   You are responsible for verifying that messages sent to connected
+   devices are safe for those devices and their environment.
+
+7. LIMITATION OF LIABILITY
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE LICENSOR BE
+   LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES,
+   INCLUDING DAMAGE TO EQUIPMENT, LOSS OF DATA OR LOSS OF PROFITS, ARISING
+   OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE.
+
+8. TERMINATION
+   This Agreement is effective until terminated. It terminates automatically
+   if you fail to comply with any of its terms. Upon termination you must
+   uninstall and stop using the Software.
+
+9. GOVERNING LAW
+   This Agreement is governed by the laws of the licensor's country of
+   residence, without regard to its conflict of law provisions.
+
+10. CONTACT INFORMATION
+   Questions about this Agreement can be sent to the publisher shown in
+   Help > About.
+
+NOTE: This text is a template and should be reviewed by a legal
+professional before commercial distribution.

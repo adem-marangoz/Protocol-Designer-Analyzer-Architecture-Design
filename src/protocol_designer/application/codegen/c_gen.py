@@ -23,7 +23,6 @@ _CUSTOM_C = {
 
 
 def c_member(fp: FieldPlan) -> List[str]:
-    f = fp.field
     comment = f"  /* {fp.comment} */" if fp.comment else ""
     if fp.kind == "bytes":
         if fp.variable:
@@ -332,7 +331,7 @@ class CGenerator:
             if fp.encoding == Encoding.CONSTANT:
                 out.append("    {")
                 out.append(f"        static const uint8_t k[{len(fp.const)}] = {_bytes_literal(fp.const)};")
-                out.append(f"        memcpy(&buffer[pos], k, sizeof k);")
+                out.append("        memcpy(&buffer[pos], k, sizeof k);")
                 out.append("    }")
             elif fp.encoding in (Encoding.LENGTH, Encoding.CRC):
                 out.append(f"    memset(&buffer[pos], 0, sz[{i}]);")
@@ -343,7 +342,7 @@ class CGenerator:
                     out.append(f"    memcpy(&buffer[pos], msg->{fp.ident}, sz[{i}]);")
                 else:
                     out.append(f"    memset(&buffer[pos], 0, sz[{i}]);")
-                    out.append(f"    {{")
+                    out.append("    {")
                     out.append(f"        size_t len = strlen(msg->{fp.ident});")
                     out.append(f"        if (len > sz[{i}])")
                     out.append("        {")

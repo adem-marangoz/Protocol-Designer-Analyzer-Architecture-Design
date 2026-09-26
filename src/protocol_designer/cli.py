@@ -30,8 +30,8 @@ from .protocol import crc as crc_mod
 from .protocol.errors import ProtocolError
 from .protocol.fields import fixed_size
 from .protocol.model import ProtocolDefinition, TransportType
-from .protocol.validator import has_errors, validate_protocol
-from .protocol.values import parse_hex_bytes, parse_int, to_hex
+from .protocol.validator import validate_protocol
+from .protocol.values import parse_hex_bytes, parse_int
 from .storage import load_protocol
 from .transport import TransportError, list_can_interfaces, list_serial_ports
 

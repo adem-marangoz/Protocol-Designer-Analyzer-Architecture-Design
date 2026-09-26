@@ -206,7 +206,7 @@ def _frame_class(fr: FramePlan) -> List[str]:
             out.append(f"        chunks[{i}] = _put_u(1 if self.{fp.ident} else 0, {fp.size}, {little})")
         else:
             out.append(f"        chunks[{i}] = _put_u(self.{fp.ident}, {fp.size}, {little})")
-    out.append(f"        sz = [len(c) for c in chunks]")
+    out.append("        sz = [len(c) for c in chunks]")
     for fp in fr.fields:
         if fp.encoding == Encoding.LENGTH:
             s, e = fp.range_start, fp.range_end

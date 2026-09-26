@@ -4,8 +4,6 @@ import time
 
 import pytest
 
-from helpers import make_protocol
-
 from protocol_designer.application.session import Session
 from protocol_designer.application.test_engine import ABORTED, ERROR, FAIL, PASS, TestEngine
 from protocol_designer.protocol.model import CheckDefinition, TestDefinition, TestStep, TransportType
