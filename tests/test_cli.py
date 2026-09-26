@@ -23,7 +23,7 @@ def test_validate(capsys, tpms_file):
 
 def test_validate_errors(capsys, tmp_path):
     bad = tmp_path / "bad.json"
-    bad.write_text(json.dumps({"frames": [{"name": "A", "fields": []}]}))
+    bad.write_text(json.dumps({"frames": [{"name": "A", "fields": []}]}), encoding="utf-8")
     code, out, _ = run(capsys, "validate", str(bad))
     assert code == 1 and "no fields" in out
 

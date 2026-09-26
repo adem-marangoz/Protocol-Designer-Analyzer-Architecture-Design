@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -109,7 +110,9 @@ class MessagePage(Page):
         lv = QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
         props = QGroupBox("Message")
-        pf = QFormLayout(props)
+        pf = QGridLayout(props)
+        pf.setColumnStretch(1, 1)
+        pf.setColumnStretch(3, 1)
         self.m_name = QLineEdit()
         self.m_id = QLineEdit()
         self.m_dir = QComboBox()
@@ -119,16 +122,22 @@ class MessagePage(Page):
         self.m_ext = QCheckBox("29-bit extended CAN id")
         self.m_resp = QComboBox()
         self.m_desc = QLineEdit()
-        pf.addRow("Name", self.m_name)
-        pf.addRow("Command / ID", self.m_id)
-        pf.addRow("Direction", self.m_dir)
-        pf.addRow("CAN ID", self.m_can)
-        pf.addRow("", self.m_ext)
-        pf.addRow("Expected response", self.m_resp)
-        pf.addRow("Description", self.m_desc)
-        self.m_apply = QPushButton("Apply message properties")
+        can_row = QHBoxLayout()
+        can_row.addWidget(self.m_can, 1)
+        can_row.addWidget(self.m_ext)
+        self.m_ext.setText("29-bit")
+        self.m_ext.setToolTip("29-bit extended CAN id")
+        self.m_apply = QPushButton("Apply")
         self.m_apply.clicked.connect(self.apply_message)
-        pf.addRow("", self.m_apply)
+        cells = [("Name", self.m_name, 0, 0), ("Command / ID", self.m_id, 0, 2), ("Direction", self.m_dir, 1, 0),
+                 ("CAN ID", can_row, 1, 2), ("Expected response", self.m_resp, 2, 0), ("Description", self.m_desc, 2, 2)]
+        for label, widget, row, col in cells:
+            pf.addWidget(QLabel(label), row, col)
+            if isinstance(widget, QHBoxLayout):
+                pf.addLayout(widget, row, col + 1)
+            else:
+                pf.addWidget(widget, row, col + 1)
+        pf.addWidget(self.m_apply, 3, 3, alignment=Qt.AlignmentFlag.AlignRight)
         lv.addWidget(props)
 
         fields_box = QGroupBox("Fields")
@@ -163,7 +172,7 @@ class MessagePage(Page):
         self.preview = QPlainTextEdit()
         self.preview.setReadOnly(True)
         self.preview.setFont(mono_font())
-        self.preview.setMaximumHeight(130)
+        self.preview.setMaximumHeight(90)
         pv.addWidget(self.preview)
         lv.addWidget(prev)
         split.addWidget(left)
@@ -223,7 +232,11 @@ class MessagePage(Page):
         self.bits = QTableWidget(0, 4)
         self.bits.setHorizontalHeaderLabels(["Bit group", "Start bit", "Bits", "Enum"])
         self.bits.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.bits.setMinimumHeight(120)
+        self.bits.setWordWrap(False)
+        self.bits.verticalHeader().setDefaultSectionSize(24)
+        self.bits.setMinimumHeight(170)
+        for col, width in ((1, 70), (2, 50), (3, 110)):
+            self.bits.setColumnWidth(col, width)
         brow = QHBoxLayout()
         self.b_add = QPushButton("+ Bit group")
         self.b_del = QPushButton("Remove")
@@ -250,7 +263,7 @@ class MessagePage(Page):
         bl.addWidget(editor)
         scroll.setWidget(box)
         split.addWidget(scroll)
-        split.setSizes([620, 420])
+        split.setSizes([700, 440])
 
         ctx.protocol_edited.connect(self._refresh_after_edit)
         self.on_protocol_changed()

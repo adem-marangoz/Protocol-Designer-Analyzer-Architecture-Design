@@ -149,6 +149,7 @@ class TestPage(Page):
         self.reports: List[TestReport] = []
         self.last_report_path: Optional[Path] = None
         self._queue: List[str] = []
+        self._busy = False
         self._current_item: Optional[QTreeWidgetItem] = None
         self.on_protocol_changed()
 
@@ -247,11 +248,13 @@ class TestPage(Page):
 
     @property
     def running(self) -> bool:
-        return self.thread is not None and self.thread.is_alive()
+        """True until the last report has been processed on the GUI thread."""
+        return self._busy
 
     def run(self, names: List[str]) -> bool:
         if self.running or not names:
             return False
+        self._busy = True
         self._queue = list(names)
         self.results.clear()
         self.reports = []
@@ -321,6 +324,7 @@ class TestPage(Page):
             self._start_next()
             return
         self._set_running(False)
+        self._busy = False
         passed = sum(1 for r in self.reports if r.passed)
         overall = PASS if passed == len(self.reports) else "FAIL"
         self.result_label.setText(f"RESULT: {overall}" + (f"  ({passed}/{len(self.reports)} passed)" if len(self.reports) > 1 else ""))

@@ -1,0 +1,104 @@
+name: Build & Test
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to attach the installer to a GitHub Release on tags
+
+jobs:
+  test-linux:
+    name: Tests (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: System libraries for Qt
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+      - name: Install
+        run: pip install -r requirements-dev.txt
+      - name: Tests (engine, transports, application, code generator incl. gcc/g++/dotnet, GUI)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q
+
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -r requirements-dev.txt
+      - name: Tests on Windows
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = (python -c "import sys; sys.path.insert(0, 'src'); import protocol_designer as p; print(p.__version__)").Trim()
+          if ("${{ github.ref_type }}" -eq "tag" -and "${{ github.ref_name }}" -ne "v$v") {
+            throw "Tag ${{ github.ref_name }} does not match the package version $v"
+          }
+          "version=$v" >> $env:GITHUB_OUTPUT
+      - name: Build executables (PyInstaller)
+        run: |
+          python packaging/make_version_info.py
+          python -m PyInstaller --noconfirm --clean packaging/ProtocolDesigner.spec
+      - name: Smoke test the executables
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          dist\ProtocolDesigner\pdcli.exe --version
+          dist\ProtocolDesigner\pdcli.exe validate protocols\tpms_rs485.json
+          if ($LASTEXITCODE -ne 0) { throw "pdcli validate failed" }
+          dist\ProtocolDesigner\pdcli.exe test protocols\ecu_bootloader.json
+          if ($LASTEXITCODE -ne 0) { throw "pdcli test failed" }
+          $p = Start-Process dist\ProtocolDesigner\ProtocolDesigner.exe -ArgumentList "--self-test","protocols\tpms_rs485.json" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "GUI self-test failed with exit code $($p.ExitCode)" }
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+          "${env:ProgramFiles(x86)}\Inno Setup 6" >> $env:GITHUB_PATH
+      - name: Build installer
+        shell: pwsh
+        run: |
+          iscc /DAppVersion=${{ steps.version.outputs.version }} installer\setup.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+          # a second, newer build used only to test the upgrade path
+          iscc /DAppVersion=99.0.0 "/O$PWD\installer\Output\upgrade-test" installer\setup.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC (upgrade test) failed" }
+      - name: "Installer end-to-end test: install, run, upgrade, uninstall"
+        shell: pwsh
+        run: >
+          ./packaging/test_installer.ps1
+          -Setup installer/Output/ProtocolDesigner-Setup-${{ steps.version.outputs.version }}.exe
+          -UpgradeSetup installer/Output/upgrade-test/ProtocolDesigner-Setup-99.0.0.exe
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtocolDesigner-Setup-${{ steps.version.outputs.version }}
+          path: installer/Output/ProtocolDesigner-Setup-${{ steps.version.outputs.version }}.exe
+          if-no-files-found: error
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installer/Output/ProtocolDesigner-Setup-${{ steps.version.outputs.version }}.exe
+          generate_release_notes: true

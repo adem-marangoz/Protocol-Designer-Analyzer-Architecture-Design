@@ -89,7 +89,7 @@ def test_dashboard_shows_protocol(window):
 
 def test_open_invalid_file_reports_error(window, dialogs, tmp_path):
     bad = tmp_path / "bad.json"
-    bad.write_text("{nope")
+    bad.write_text("{nope", encoding="utf-8")
     assert not window.open_file(str(bad), ask=False)
     assert errors(dialogs) and "invalid JSON" in errors(dialogs)[0][2]
 
@@ -123,7 +123,7 @@ def test_close_with_unsaved_changes_can_save(window, dialogs):
     window.ctx.mark_modified()
     dialogs.question_answer = QMessageBox.StandardButton.Save
     assert window.close()
-    text = (window.work_dir / "tpms_rs485.json").read_text()
+    text = (window.work_dir / "tpms_rs485.json").read_text(encoding="utf-8")
     assert "edited" in text
 
 
@@ -358,7 +358,7 @@ def test_monitor_export(window, qtbot, dialogs, tmp_path, monkeypatch):
     target = tmp_path / "traffic.csv"
     monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(target), "")))
     page._export()
-    assert target.read_text().startswith("time,direction")
+    assert target.read_text(encoding="utf-8").startswith("time,direction")
 
 
 # --------------------------------------------------------------- tests ---

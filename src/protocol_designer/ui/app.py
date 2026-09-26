@@ -40,6 +40,29 @@ def create_app(argv: Optional[List[str]] = None) -> QApplication:
     return app
 
 
+def _self_test(app: QApplication, window: MainWindow) -> int:
+    """Used by the build pipeline: visit every page, run the example tests, exit."""
+    import time
+
+    for key in window.pages:
+        window.show_page(key)
+        app.processEvents()
+    page = window.pages["tests"]
+    names = [t.name for t in window.ctx.protocol.tests]
+    passed = True
+    if names:
+        page.run(names)
+        deadline = time.monotonic() + 30
+        while (page.running or len(page.reports) < len(names)) and time.monotonic() < deadline:
+            app.processEvents()
+            time.sleep(0.01)
+        passed = len(page.reports) == len(names) and all(r.passed for r in page.reports)
+    window.ctx.manager.modified = False
+    window.close()
+    print(f"self-test: {len(window.pages)} pages, {len(names)} test(s), {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     argv = list(sys.argv if argv is None else argv)
     if sys.platform == "win32":
@@ -59,6 +82,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     file_arg = next((a for a in argv[1:] if not a.startswith("-")), None)
     window.open_initial(file_arg)
     window.show()
+    if "--self-test" in argv:
+        return _self_test(app, window)
     if first_run:
         window.statusBar().showMessage(f"Welcome! Example protocols were copied to {paths.protocols_dir()}", 15000)
     code = app.exec()

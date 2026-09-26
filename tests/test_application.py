@@ -189,9 +189,9 @@ def test_settings_default_location_and_bad_file(tmp_path):
     s = AppSettings()
     path = s.save()
     assert path == paths.settings_file()
-    path.write_text("{not json")
+    path.write_text("{not json", encoding="utf-8")
     assert AppSettings.load() == AppSettings()
-    path.write_text(json.dumps({"theme": "dark", "unknown": 1, "recent_files": "bad"}))
+    path.write_text(json.dumps({"theme": "dark", "unknown": 1, "recent_files": "bad"}), encoding="utf-8")
     loaded = AppSettings.load()
     assert loaded.theme == "dark" and loaded.recent_files == []
 
@@ -211,12 +211,12 @@ def test_first_run_copies_examples_once(protocols_dir):
     copied = sorted(p.name for p in paths.protocols_dir().glob("*.json"))
     assert copied == sorted(p.name for p in protocols_dir.glob("*.json"))
     user_file = paths.protocols_dir() / "tpms_rs485.json"
-    user_file.write_text("edited")
+    user_file.write_text("edited", encoding="utf-8")
     assert paths.first_run_setup() is False
     paths.copy_examples()
-    assert user_file.read_text() == "edited"  # user edits survive
+    assert user_file.read_text(encoding="utf-8") == "edited"  # user edits survive
     paths.copy_examples(overwrite=True)
-    assert user_file.read_text() != "edited"
+    assert user_file.read_text(encoding="utf-8") != "edited"
 
 
 def test_resources_exist():
@@ -239,9 +239,9 @@ def test_traffic_log_and_exports(tmp_path, tpms):
     log.add(TrafficEntry("INFO", note="hello"))
     assert len(log) == 3 and len(seen) == 4
     assert [e.status for e in log.entries] == ["UNKNOWN", "CRC ERROR", ""]
-    csv_text = log.save(tmp_path / "t.csv").read_text()
+    csv_text = log.save(tmp_path / "t.csv").read_text(encoding="utf-8")
     assert csv_text.splitlines()[0].startswith("time,direction")
-    txt = log.save(tmp_path / "t.txt").read_text()
+    txt = log.save(tmp_path / "t.txt").read_text(encoding="utf-8")
     assert "no matching frame" in txt and "READ_SENSOR" in txt
     log.clear()
     assert len(log) == 0
@@ -252,6 +252,6 @@ def test_setup_logging(tmp_path):
     logging.getLogger("x").info("hello log")
     for h in logging.getLogger().handlers:
         h.flush()
-    assert "hello log" in logfile.read_text()
+    assert "hello log" in logfile.read_text(encoding="utf-8")
     setup_logging(directory=tmp_path)  # idempotent: no duplicate handlers
     assert sum(1 for h in logging.getLogger().handlers if getattr(h, "_protocol_designer", False)) == 1

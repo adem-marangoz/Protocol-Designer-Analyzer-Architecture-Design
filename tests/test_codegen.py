@@ -241,7 +241,7 @@ def test_c_roundtrip(tmp_path, protocols_dir, which):
     name = f"gen_{which}"
     write_files(generate(protocol, "c", basename=name), tmp_path)
     harness, plan = c_harness(protocol, name)
-    (tmp_path / "main.c").write_text(harness)
+    (tmp_path / "main.c").write_text(harness, encoding="utf-8")
     exe = tmp_path / "harness"
     subprocess.run(
         ["gcc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-O2", "-I", str(tmp_path),
@@ -272,7 +272,7 @@ int main() {
                 (int)tpms_rs485_protocol::identify(bytes));
     return 0;
 }
-""")
+""", encoding="utf-8")
     subprocess.run(["gcc", "-std=c99", "-c", str(tmp_path / "tpms.c"), "-o", str(tmp_path / "tpms.o")], check=True)
     subprocess.run(
         ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-I", str(tmp_path), str(tmp_path / "main.cpp"),
@@ -319,11 +319,12 @@ def test_csharp_roundtrip(tmp_path, protocols_dir, which):
         f'                case "{fr.frame.name}": if ({ns}.{pascal(fr.frame.name)}.TryDecode(d, out var m{i})) o = m{i}.Encode(); break;'
         for i, fr in enumerate(plan.frames)
     )
-    (tmp_path / "Harness.cs").write_text(HARNESS_CS.format(cases=cases, ns=ns))
+    (tmp_path / "Harness.cs").write_text(HARNESS_CS.format(cases=cases, ns=ns), encoding="utf-8")
     (tmp_path / "h.csproj").write_text(
         '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
         "<TargetFramework>net8.0</TargetFramework><Nullable>disable</Nullable>"
-        "<TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>"
+        "<TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>",
+        encoding="utf-8",
     )
     env = dict(os.environ, DOTNET_CLI_TELEMETRY_OPTOUT="1", DOTNET_NOLOGO="1")
     build = subprocess.run(["dotnet", "build", "-nologo", "-v", "q", "-o", str(tmp_path / "out")],
