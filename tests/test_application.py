@@ -212,11 +212,24 @@ def test_first_run_copies_examples_once(protocols_dir):
     assert copied == sorted(p.name for p in protocols_dir.glob("*.json"))
     user_file = paths.protocols_dir() / "tpms_rs485.json"
     user_file.write_text("edited", encoding="utf-8")
+    (paths.protocols_dir() / "tpms_can.json").unlink()  # the user deletes an example
     assert paths.first_run_setup() is False
-    paths.copy_examples()
     assert user_file.read_text(encoding="utf-8") == "edited"  # user edits survive
+    assert not (paths.protocols_dir() / "tpms_can.json").exists()  # deleted examples stay deleted
+    paths.copy_examples()
+    assert user_file.read_text(encoding="utf-8") == "edited"
     paths.copy_examples(overwrite=True)
     assert user_file.read_text(encoding="utf-8") != "edited"
+
+
+def test_examples_available_later_are_still_delivered(monkeypatch, protocols_dir, tmp_path):
+    # e.g. the program first ran without the "examples" component, which was installed afterwards
+    monkeypatch.setattr(paths, "bundled_examples_dirs", lambda: [])
+    assert paths.first_run_setup() is True
+    assert not list(paths.protocols_dir().glob("*.json"))
+    monkeypatch.setattr(paths, "bundled_examples_dirs", lambda: [protocols_dir])
+    assert paths.first_run_setup() is False
+    assert (paths.protocols_dir() / "tpms_rs485.json").exists()
 
 
 def test_resources_exist():

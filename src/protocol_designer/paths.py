@@ -147,11 +147,31 @@ def copy_examples(overwrite: bool = False) -> List[Path]:
 
 
 def first_run_setup() -> bool:
-    """Create user folders and copy examples on first launch. Returns True on first run."""
-    marker = settings_dir() / ".initialized"
+    """Create the user folders and deliver example protocols. Returns True on first launch.
+
+    Each bundled example is copied once. The names already delivered are
+    remembered, so an example the user deleted does not come back, while
+    examples that become available later (installed afterwards, or added by
+    an upgrade) are still copied.
+    """
+    import json
+
+    marker = settings_dir() / "examples_delivered.json"
     ensure_user_dirs()
-    if marker.exists():
-        return False
-    copy_examples()
-    marker.write_text("1", encoding="utf-8")
-    return True
+    first = not marker.exists()
+    try:
+        delivered = set(json.loads(marker.read_text(encoding="utf-8"))) if not first else set()
+    except (OSError, ValueError, TypeError):
+        delivered = set()
+    target = protocols_dir()
+    for source_dir in bundled_examples_dirs():
+        for src in sorted(source_dir.glob("*.json")):
+            if src.name in delivered:
+                continue
+            dst = target / src.name
+            if not dst.exists():
+                shutil.copy2(src, dst)
+            delivered.add(src.name)
+        break  # first existing examples folder wins
+    marker.write_text(json.dumps(sorted(delivered), indent=0), encoding="utf-8")
+    return first
