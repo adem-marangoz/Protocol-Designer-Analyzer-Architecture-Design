@@ -3,11 +3,11 @@
   "protocol": {
     "name": "TPMS CAN Protocol",
     "version": "1.0",
-    "description": "Example tyre-pressure messages over CAN (Intel byte order, CRC8 SAE-J1850 protection). Uses the in-process virtual CAN bus by default; change can_interface to pcan, vector, kvaser, slcan, socketcan... for real hardware.",
+    "description": "Example tyre-pressure messages over CAN (Intel byte order, CRC8 SAE-J1850 protection). Runs against the built-in device simulator by default; set the transport to CAN and can_interface to pcan, vector, kvaser, slcan, socketcan... for real hardware.",
     "endianness": "LITTLE"
   },
   "transport": {
-    "type": "CAN",
+    "type": "SIMULATOR",
     "can_interface": "virtual",
     "can_channel": "tpms",
     "can_bitrate": 500000,
