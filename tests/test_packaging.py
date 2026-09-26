@@ -42,7 +42,8 @@ def test_installer_wizard_requirements():
     assert re.search(r"^LicenseFile=", text, re.M), "license agreement page"
     assert "DefaultDirName={autopf}\\ProtocolDesigner" in text, "install location page"
     assert "UninstallDisplayIcon=" in text and "UninstallDisplayName=" in text, "Installed apps entry"
-    assert 'Description: "Launch {#AppName} now"' in text, "finish page option"
+    assert 'Description: "Launch {#AppNameLabel} now"' in text, "finish page option"
+    assert '#define AppNameLabel "Protocol Designer && Analyzer"' in text
     assert "[Components]" in text and "[Tasks]" in text
     assert "desktopicon" in text and "fileassoc" in text
     assert "Also delete your projects and settings?" in text

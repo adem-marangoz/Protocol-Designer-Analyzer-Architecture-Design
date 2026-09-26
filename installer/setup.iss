@@ -13,6 +13,8 @@
   #define AppVersion "1.0.0"
 #endif
 #define AppName      "Protocol Designer & Analyzer"
+; captions of checkboxes treat "&" as a keyboard accelerator: use "&&" there
+#define AppNameLabel "Protocol Designer && Analyzer"
 #define AppPublisher "Protocol Designer Project"
 #define AppURL       "https://github.com/adem-marangoz/Protocol-Designer-Analyzer-Architecture-Design"
 #define AppExeName   "ProtocolDesigner.exe"
@@ -77,7 +79,7 @@ Name: "docs";     Description: "User guide and protocol format reference"; Types
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"
-Name: "fileassoc";   Description: "&Associate .pdproj files with {#AppName}"; GroupDescription: "File associations:"
+Name: "fileassoc";   Description: "&Associate .pdproj files with {#AppNameLabel}"; GroupDescription: "File associations:"
 
 [Files]
 Source: "..\dist\ProtocolDesigner\*"; DestDir: "{app}"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -106,7 +108,7 @@ Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\{#AppExe
 Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\{#CliExeName}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#CliExeName}"; Flags: uninsdeletekey
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName} now"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppNameLabel} now"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; Only files the program itself may have created inside its own folder.
