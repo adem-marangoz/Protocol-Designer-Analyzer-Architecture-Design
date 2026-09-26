@@ -1,0 +1,138 @@
+{
+  "format_version": 1,
+  "protocol": {
+    "name": "ECU Bootloader",
+    "version": "1.0",
+    "description": "Example bootloader protocol showing a complete sequence (Section 23): GET_SEED -> SEND_KEY -> TRANSFER_INIT -> TRANSFER_DATA -> VERIFY -> RESET. Frame: SOF | CMD | LEN(16-bit LE) | PAYLOAD | CRC16/MODBUS (LE).",
+    "endianness": "LITTLE"
+  },
+  "transport": {
+    "type": "SIMULATOR",
+    "port": "COM5",
+    "baudrate": 115200,
+    "data_bits": 8,
+    "parity": "NONE",
+    "stop_bits": 1,
+    "timeout_ms": 100
+  },
+  "enums": {
+    "RESULT": { "values": { "0x00": "OK", "0x01": "INVALID_KEY", "0x02": "LOCKED", "0x03": "WRITE_ERROR", "0x04": "VERIFY_FAILED" } }
+  },
+  "frames": [
+    {
+      "name": "GET_SEED", "id": 39, "direction": "TX", "expected_response": "SEED_RESPONSE",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x27" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "LEVEL", "type": "UINT8", "default": 1 },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "SEED_RESPONSE", "id": 103, "direction": "RX",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x67" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "SEED", "type": "UINT32" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "SEND_KEY", "id": 40, "direction": "TX", "expected_response": "RESPONSE",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x28" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "KEY", "type": "UINT32" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "TRANSFER_INIT", "id": 52, "direction": "TX", "expected_response": "RESPONSE",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x34" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "ADDRESS", "type": "UINT32", "default": "0x08004000" },
+        { "name": "SIZE", "type": "UINT32" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "TRANSFER_DATA", "id": 54, "direction": "TX", "expected_response": "RESPONSE",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x36" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "BLOCK", "type": "UINT16" },
+        { "name": "DATA", "type": "BYTES" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "VERIFY", "id": 55, "direction": "TX", "expected_response": "RESPONSE",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x37" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "IMAGE_CRC", "type": "UINT32" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "RESET", "id": 17, "direction": "TX", "expected_response": "RESPONSE",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x11" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    },
+    {
+      "name": "RESPONSE", "id": 112, "direction": "RX",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0x7E" },
+        { "name": "CMD", "type": "UINT8", "encoding": "CONSTANT", "value": "0x70" },
+        { "name": "LEN", "type": "UINT16", "encoding": "LENGTH" },
+        { "name": "SERVICE", "type": "UINT8" },
+        { "name": "RESULT", "type": "ENUM", "size": 1, "enum": "RESULT" },
+        { "name": "CRC", "type": "UINT16", "encoding": "CRC16_MODBUS" }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "name": "Flash Sequence",
+      "description": "Unlock with seed/key, download two blocks, verify and reset",
+      "timeout_ms": 500,
+      "steps": [
+        { "action": "transact", "message": "GET_SEED", "values": { "LEVEL": 1 },
+          "checks": [ { "field": "SEED", "not_equals": 0, "save_as": "seed" } ] },
+        { "action": "set", "variable": "key", "value": "${seed} ^ 0x5A5A5A5A" },
+        { "action": "transact", "message": "SEND_KEY", "values": { "KEY": "${key}" },
+          "checks": [ { "field": "SERVICE", "equals": "0x28" }, { "field": "RESULT", "equals": "OK" } ] },
+        { "action": "transact", "message": "TRANSFER_INIT", "values": { "ADDRESS": "0x08004000", "SIZE": 8 },
+          "checks": [ { "field": "RESULT", "equals": "OK" } ] },
+        { "action": "transact", "message": "TRANSFER_DATA", "values": { "BLOCK": 0, "DATA": "01 02 03 04" },
+          "checks": [ { "field": "RESULT", "equals": "OK" } ] },
+        { "action": "transact", "message": "TRANSFER_DATA", "values": { "BLOCK": 1, "DATA": "05 06 07 08" },
+          "checks": [ { "field": "RESULT", "equals": "OK" } ] },
+        { "action": "transact", "message": "VERIFY", "values": { "IMAGE_CRC": "0x3FCA88C5" },
+          "checks": [ { "field": "RESULT", "equals": "OK" } ] },
+        { "action": "transact", "message": "RESET", "checks": [ { "field": "SERVICE", "equals": "0x11" } ] },
+        { "action": "log", "text": "Flashing finished, seed was ${seed}" }
+      ]
+    }
+  ],
+  "simulator": [
+    { "on": "GET_SEED", "reply": "SEED_RESPONSE", "values": { "SEED": "0x12345678" } },
+    { "on": "SEND_KEY", "reply": "RESPONSE", "values": { "SERVICE": "0x28", "RESULT": "OK" }, "match": { "KEY": "0x486E0C22" } },
+    { "on": "SEND_KEY", "reply": "RESPONSE", "values": { "SERVICE": "0x28", "RESULT": "INVALID_KEY" } },
+    { "on": "TRANSFER_INIT", "reply": "RESPONSE", "values": { "SERVICE": "0x34", "RESULT": "OK" } },
+    { "on": "TRANSFER_DATA", "reply": "RESPONSE", "values": { "SERVICE": "0x36", "RESULT": "OK" } },
+    { "on": "VERIFY", "reply": "RESPONSE", "values": { "SERVICE": "0x37", "RESULT": "OK" } },
+    { "on": "RESET", "reply": "RESPONSE", "values": { "SERVICE": "0x11", "RESULT": "OK" } }
+  ]
+}

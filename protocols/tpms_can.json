@@ -1,0 +1,92 @@
+{
+  "format_version": 1,
+  "protocol": {
+    "name": "TPMS CAN Protocol",
+    "version": "1.0",
+    "description": "Example tyre-pressure messages over CAN (Intel byte order, CRC8 SAE-J1850 protection). Uses the in-process virtual CAN bus by default; change can_interface to pcan, vector, kvaser, slcan, socketcan... for real hardware.",
+    "endianness": "LITTLE"
+  },
+  "transport": {
+    "type": "CAN",
+    "can_interface": "virtual",
+    "can_channel": "tpms",
+    "can_bitrate": 500000,
+    "timeout_ms": 100
+  },
+  "enums": {
+    "WHEEL": { "values": { "0x00": "FRONT_LEFT", "0x01": "FRONT_RIGHT", "0x02": "REAR_LEFT", "0x03": "REAR_RIGHT" } },
+    "ALERT": { "values": { "0x00": "NONE", "0x01": "LOW_PRESSURE", "0x02": "HIGH_TEMPERATURE", "0x03": "FAST_LEAK" } }
+  },
+  "frames": [
+    {
+      "name": "REQUEST_PRESSURE",
+      "id": 1,
+      "direction": "TX",
+      "can_id": 769,
+      "expected_response": "WHEEL_PRESSURE",
+      "fields": [
+        { "name": "WHEEL", "type": "ENUM", "size": 1, "enum": "WHEEL" }
+      ]
+    },
+    {
+      "name": "WHEEL_PRESSURE",
+      "id": 2,
+      "direction": "RX",
+      "can_id": 768,
+      "fields": [
+        { "name": "WHEEL", "type": "ENUM", "size": 1, "enum": "WHEEL" },
+        { "name": "PRESSURE", "type": "UINT16", "scale": 0.01, "unit": "bar", "min": 0, "max": 6 },
+        { "name": "TEMPERATURE", "type": "UINT8", "value_offset": -40, "unit": "°C", "min": -40, "max": 150 },
+        {
+          "name": "STATUS",
+          "type": "BITFIELD",
+          "size": 1,
+          "bits": [
+            { "name": "Valid", "start": 0 },
+            { "name": "Battery Low", "start": 1 },
+            { "name": "Alert", "start": 2, "length": 2, "enum": "ALERT" }
+          ]
+        },
+        { "name": "COUNTER", "type": "UINT8" },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC", "crc": "CRC8_SAE_J1850" }
+      ]
+    },
+    {
+      "name": "VEHICLE_SPEED",
+      "id": 3,
+      "direction": "RX",
+      "can_id": 419430400,
+      "can_extended": true,
+      "fields": [
+        { "name": "SPEED", "type": "UINT16", "scale": 0.1, "unit": "km/h", "max": 400 },
+        { "name": "MOVING", "type": "BOOLEAN" }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "name": "Front Left Pressure",
+      "timeout_ms": 300,
+      "steps": [
+        {
+          "action": "transact",
+          "message": "REQUEST_PRESSURE",
+          "values": { "WHEEL": "FRONT_LEFT" },
+          "checks": [
+            { "field": "WHEEL", "equals": "FRONT_LEFT" },
+            { "field": "PRESSURE", "min": 1.8, "max": 3.0 },
+            { "field": "TEMPERATURE", "min": -20, "max": 80 }
+          ]
+        }
+      ]
+    }
+  ],
+  "simulator": [
+    {
+      "on": "REQUEST_PRESSURE",
+      "reply": "WHEEL_PRESSURE",
+      "copy": [ "WHEEL" ],
+      "values": { "PRESSURE": 2.35, "TEMPERATURE": 31, "STATUS": { "Valid": true, "Alert": "NONE" }, "COUNTER": 1 }
+    }
+  ]
+}
