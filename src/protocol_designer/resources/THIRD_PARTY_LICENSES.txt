@@ -1,0 +1,48 @@
+THIRD-PARTY SOFTWARE NOTICES
+Protocol Designer & Analyzer includes the following open-source components.
+Each component is the property of its respective authors and is distributed
+under its own license, summarised below. The full license texts are
+available at the listed locations.
+
+------------------------------------------------------------------------
+Python
+  License: Python Software Foundation License Version 2
+  https://docs.python.org/3/license.html
+
+------------------------------------------------------------------------
+Qt 6 / Qt for Python (PySide6, shiboken6)
+  Copyright (C) The Qt Company Ltd. and other contributors
+  License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+  https://www.qt.io/licensing/  https://www.gnu.org/licenses/lgpl-3.0.html
+  Qt libraries are shipped as separate, replaceable dynamic libraries
+  (Qt6*.dll) in the installation folder, as required by the LGPL. Source
+  code: https://download.qt.io/official_releases/
+
+------------------------------------------------------------------------
+pyserial
+  Copyright (c) 2001-2020 Chris Liechti and contributors
+  License: BSD 3-Clause
+  https://github.com/pyserial/pyserial/blob/master/LICENSE.txt
+
+------------------------------------------------------------------------
+python-can
+  Copyright (c) python-can contributors
+  License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+  https://github.com/hardbyte/python-can/blob/main/LICENSE.txt
+
+------------------------------------------------------------------------
+wrapt, typing_extensions, packaging, msgpack (python-can dependencies)
+  Licenses: BSD 2-Clause / PSF / Apache-2.0 / Apache-2.0
+  https://pypi.org/
+
+------------------------------------------------------------------------
+PyInstaller bootloader
+  License: GPL-2.0 with a special exception that allows distributing
+  bundled applications under any license.
+  https://pyinstaller.org/en/stable/license.html
+
+------------------------------------------------------------------------
+Inno Setup (installer)
+  Copyright (C) 1997-2024 Jordan Russell and Martijn Laan
+  License: Inno Setup License (free for commercial use)
+  https://jrsoftware.org/files/is/license.txt

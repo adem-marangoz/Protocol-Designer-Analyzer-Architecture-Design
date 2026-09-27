@@ -1,0 +1,235 @@
+{
+  "format_version": 1,
+  "protocol": {
+    "name": "TPMS RS485 Protocol",
+    "version": "1.0",
+    "description": "Example tyre-pressure sensor diagnostic protocol over RS485. Frame: SOF | ADDR | CMD | LEN | PAYLOAD | CRC8.",
+    "endianness": "BIG"
+  },
+  "transport": {
+    "type": "SIMULATOR",
+    "port": "COM3",
+    "baudrate": 115200,
+    "data_bits": 8,
+    "parity": "NONE",
+    "stop_bits": 1,
+    "timeout_ms": 100
+  },
+  "enums": {
+    "SENSOR_STATUS": {
+      "description": "Operating state of a sensor",
+      "values": {
+        "0x00": "OFF",
+        "0x01": "ACTIVE",
+        "0x02": "ERROR",
+        "0x03": "NOT_AVAILABLE"
+      }
+    },
+    "SENSOR_STATE": {
+      "values": {
+        "0x00": "SLEEP",
+        "0x01": "PARKED",
+        "0x02": "DRIVING",
+        "0x03": "ALARM"
+      }
+    },
+    "ERROR_CODE": {
+      "values": {
+        "0x01": "UNKNOWN_COMMAND",
+        "0x02": "INVALID_SENSOR",
+        "0x03": "CRC_ERROR",
+        "0x04": "BUSY"
+      }
+    }
+  },
+  "frames": [
+    {
+      "name": "READ_SENSOR",
+      "id": 16,
+      "direction": "TX",
+      "description": "Request the measurements of one sensor",
+      "expected_response": "SENSOR_DATA",
+      "fields": [
+        { "name": "SOF", "offset": 0, "size": 1, "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "offset": 1, "size": 1, "type": "UINT8", "default": 1, "description": "Bus address of the receiver" },
+        { "name": "COMMAND", "offset": 2, "size": 1, "type": "UINT8", "encoding": "CONSTANT", "value": "0x10" },
+        { "name": "LENGTH", "offset": 3, "size": 1, "type": "UINT8", "encoding": "AUTO" },
+        { "name": "SENSOR_ID", "offset": 4, "size": 1, "type": "UINT8", "min": 0, "max": 15 },
+        { "name": "CRC", "offset": 5, "size": 1, "type": "UINT8", "encoding": "CRC8" }
+      ]
+    },
+    {
+      "name": "SENSOR_DATA",
+      "id": 17,
+      "direction": "RX",
+      "description": "Measurements of one sensor",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "type": "UINT8" },
+        { "name": "COMMAND", "type": "UINT8", "encoding": "CONSTANT", "value": "0x11" },
+        { "name": "LENGTH", "type": "UINT8", "encoding": "AUTO" },
+        { "name": "SENSOR_ID", "type": "UINT8", "min": 0, "max": 15 },
+        { "name": "PRESSURE", "type": "UINT16", "scale": 0.1, "unit": "bar", "min": 0, "max": 50 },
+        { "name": "TEMPERATURE", "type": "INT16", "scale": 0.1, "unit": "°C", "min": -40, "max": 125 },
+        { "name": "STATUS", "type": "ENUM", "size": 1, "enum": "SENSOR_STATUS" },
+        {
+          "name": "FLAGS",
+          "type": "BITFIELD",
+          "size": 1,
+          "bits": [
+            { "name": "Sensor Active", "start": 0 },
+            { "name": "Battery Low", "start": 1 },
+            { "name": "RF Error", "start": 2 },
+            { "name": "Sensor State", "start": 3, "length": 2, "enum": "SENSOR_STATE" }
+          ]
+        },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC8" }
+      ]
+    },
+    {
+      "name": "SET_CONFIG",
+      "id": 32,
+      "direction": "TX",
+      "description": "Configure the sampling period and alarm threshold of a sensor",
+      "expected_response": "ACK",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "type": "UINT8", "default": 1 },
+        { "name": "COMMAND", "type": "UINT8", "encoding": "CONSTANT", "value": "0x20" },
+        { "name": "LENGTH", "type": "UINT8", "encoding": "AUTO" },
+        { "name": "SENSOR_ID", "type": "UINT8", "min": 0, "max": 15 },
+        { "name": "PERIOD", "type": "UINT16", "unit": "ms", "min": 100, "max": 60000, "default": 1000 },
+        { "name": "ALARM_PRESSURE", "type": "UINT16", "scale": 0.1, "unit": "bar", "min": 0, "max": 50, "default": 1.8 },
+        { "name": "ENABLED", "type": "BOOLEAN", "default": true },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC8" }
+      ]
+    },
+    {
+      "name": "GET_INFO",
+      "id": 48,
+      "direction": "TX",
+      "description": "Ask the device for its name and firmware version",
+      "expected_response": "DEVICE_INFO",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "type": "UINT8", "default": 1 },
+        { "name": "COMMAND", "type": "UINT8", "encoding": "CONSTANT", "value": "0x30" },
+        { "name": "LENGTH", "type": "UINT8", "encoding": "AUTO" },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC8" }
+      ]
+    },
+    {
+      "name": "DEVICE_INFO",
+      "id": 49,
+      "direction": "RX",
+      "description": "Device information with a variable-length name",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "type": "UINT8" },
+        { "name": "COMMAND", "type": "UINT8", "encoding": "CONSTANT", "value": "0x31" },
+        { "name": "LENGTH", "type": "UINT8", "encoding": "AUTO" },
+        { "name": "FW_MAJOR", "type": "UINT8" },
+        { "name": "FW_MINOR", "type": "UINT8" },
+        { "name": "SERIAL", "type": "UINT32", "endianness": "LITTLE" },
+        { "name": "NAME", "type": "STRING" },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC8" }
+      ]
+    },
+    {
+      "name": "ACK",
+      "id": 128,
+      "direction": "RX",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "type": "UINT8" },
+        { "name": "COMMAND", "type": "UINT8", "encoding": "CONSTANT", "value": "0x80" },
+        { "name": "LENGTH", "type": "UINT8", "encoding": "AUTO" },
+        { "name": "ACKED_COMMAND", "type": "UINT8" },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC8" }
+      ]
+    },
+    {
+      "name": "ERROR",
+      "id": 129,
+      "direction": "RX",
+      "fields": [
+        { "name": "SOF", "type": "UINT8", "encoding": "CONSTANT", "value": "0xAA" },
+        { "name": "ADDRESS", "type": "UINT8" },
+        { "name": "COMMAND", "type": "UINT8", "encoding": "CONSTANT", "value": "0x81" },
+        { "name": "LENGTH", "type": "UINT8", "encoding": "AUTO" },
+        { "name": "CODE", "type": "ENUM", "size": 1, "enum": "ERROR_CODE" },
+        { "name": "CRC", "type": "UINT8", "encoding": "CRC8" }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "name": "Sensor Read",
+      "description": "Read sensor 5 and verify its measurements are plausible",
+      "timeout_ms": 500,
+      "steps": [
+        { "action": "send", "message": "READ_SENSOR", "values": { "ADDRESS": 1, "SENSOR_ID": 5 } },
+        {
+          "action": "expect",
+          "message": "SENSOR_DATA",
+          "timeout_ms": 500,
+          "checks": [
+            { "field": "SENSOR_ID", "equals": 5 },
+            { "field": "PRESSURE", "min": 1.5, "max": 3.5 },
+            { "field": "TEMPERATURE", "min": -20, "max": 60 },
+            { "field": "STATUS", "equals": "ACTIVE" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Configure Sensor",
+      "description": "Send a configuration and expect an acknowledgement",
+      "timeout_ms": 500,
+      "steps": [
+        {
+          "action": "transact",
+          "message": "SET_CONFIG",
+          "values": { "SENSOR_ID": 5, "PERIOD": 500, "ALARM_PRESSURE": 1.9, "ENABLED": true },
+          "checks": [ { "field": "ACKED_COMMAND", "equals": "0x20" } ]
+        }
+      ]
+    },
+    {
+      "name": "Device Info",
+      "description": "Read the device name and firmware version",
+      "timeout_ms": 500,
+      "steps": [
+        {
+          "action": "transact",
+          "message": "GET_INFO",
+          "checks": [
+            { "field": "FW_MAJOR", "min": 1 },
+            { "field": "NAME", "equals": "TPMS-GW", "save_as": "device_name" }
+          ]
+        },
+        { "action": "log", "text": "Connected to ${device_name}" }
+      ]
+    }
+  ],
+  "simulator": [
+    {
+      "on": "READ_SENSOR",
+      "reply": "SENSOR_DATA",
+      "copy": [ "ADDRESS", "SENSOR_ID" ],
+      "values": {
+        "PRESSURE": 2.4,
+        "TEMPERATURE": 25.0,
+        "STATUS": "ACTIVE",
+        "FLAGS": { "Sensor Active": true, "Battery Low": false, "RF Error": false, "Sensor State": "DRIVING" }
+      }
+    },
+    { "on": "SET_CONFIG", "reply": "ACK", "copy": [ "ADDRESS" ], "values": { "ACKED_COMMAND": "0x20" } },
+    {
+      "on": "GET_INFO",
+      "reply": "DEVICE_INFO",
+      "copy": [ "ADDRESS" ],
+      "values": { "FW_MAJOR": 1, "FW_MINOR": 4, "SERIAL": 305419896, "NAME": "TPMS-GW" }
+    }
+  ]
+}
