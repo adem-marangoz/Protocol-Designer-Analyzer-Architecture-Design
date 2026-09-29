@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0
+
+- **Protocol specification export (PDF / HTML).** *File → Export Protocol Specification (PDF)…*
+  (`Ctrl+E`), the Dashboard button, or `pdcli export`. The document contains a title page with
+  contents, the transport settings, a message overview, all enumerations, and for every message
+  its properties, a colour-coded byte layout, a field table (offset, size, type and byte order,
+  encoding, rule, scaling, range, unit, enumeration), bit-field tables, the LENGTH/CRC rules and
+  an example packet. It ends with the CRC parameters and check values, the tests, the simulator
+  rules and the validation results. It is A4 with a running header and page numbers.
+- Example protocols that become available after the first start are now copied to Documents.
+
 ## 1.0.0
 
 First release, implementing `Protocol_Designer_Architecture.md`.

@@ -475,3 +475,17 @@ def test_open_initial_prefers_argument(qtbot, dialogs, protocols_dir):
 def test_field_encoding_constants_listed(window):
     page = window.pages["messages"]
     assert [page.e_encoding.itemText(i) for i in range(page.e_encoding.count())] == [e.value for e in Encoding]
+
+
+def test_export_specification_from_gui(window, dialogs, tmp_path):
+    target = tmp_path / "exports" / "tpms_spec"
+    dialogs.save_path = str(target)  # no extension: .pdf is added
+    dialogs.question_answer = QMessageBox.StandardButton.No  # don't open a viewer
+    saved = window.export_specification()
+    assert saved == target.with_suffix(".pdf")
+    assert saved.read_bytes()[:4] == b"%PDF"
+    assert any(m[1] == "Specification exported" for m in dialogs.messages)
+    dash = window.pages["dashboard"]
+    assert "Export specification (PDF)…" in dash.action_buttons
+    dialogs.save_path = ""  # cancelled dialog
+    assert window.export_specification() is None

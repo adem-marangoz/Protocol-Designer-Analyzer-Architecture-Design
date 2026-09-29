@@ -97,3 +97,12 @@ def test_ports_and_examples(capsys):
 def test_missing_file(capsys, tmp_path):
     code, _, err = run(capsys, "validate", str(tmp_path / "none.json"))
     assert code == 2 and "cannot read" in err
+
+
+def test_export_specification(capsys, tmp_path, tpms_file):
+    out = tmp_path / "spec.pdf"
+    code, printed, _ = run(capsys, "export", tpms_file, "--out", str(out))
+    assert code == 0 and printed.strip() == str(out)
+    assert out.read_bytes()[:4] == b"%PDF"
+    code, _, _ = run(capsys, "export", tpms_file, "--out", str(tmp_path / "spec.html"))
+    assert code == 0 and "Protocol Specification" in (tmp_path / "spec.html").read_text(encoding="utf-8")

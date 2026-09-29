@@ -27,6 +27,7 @@ class DashboardPage(Page):
     open_requested = Signal()
     new_requested = Signal()
     open_path_requested = Signal(str)
+    export_requested = Signal()
 
     def __init__(self, ctx, parent=None):
         super().__init__(ctx, parent)
@@ -62,6 +63,7 @@ class DashboardPage(Page):
             ("Live monitor", lambda: ctx.navigate.emit("monitor", None)),
             ("Run tests", lambda: ctx.navigate.emit("tests", None)),
             ("Generate code", lambda: ctx.navigate.emit("codegen", None)),
+            ("Export specification (PDF)…", self.export_requested.emit),
         ]
         self.action_buttons = {}
         for text, slot in buttons:
