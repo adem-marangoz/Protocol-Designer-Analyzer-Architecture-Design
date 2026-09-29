@@ -8,6 +8,7 @@ Everything the GUI does is available for scripts and CI pipelines::
     pdcli test      protocols/tpms_rs485.json --report results/
     pdcli generate  protocols/tpms_rs485.json --lang c --out generated/
     pdcli monitor   protocols/tpms_rs485.json --transport RS485 --port COM3 --seconds 10
+    pdcli export    protocols/tpms_rs485.json --out tpms_specification.pdf
 """
 
 from __future__ import annotations
@@ -234,6 +235,15 @@ def cmd_ports(args) -> int:
     return 0
 
 
+def cmd_export(args) -> int:
+    from .application.spec_report import export
+
+    p = load_protocol(args.file)
+    out = Path(args.out) if args.out else Path(args.file).with_name(Path(args.file).stem + "_specification.pdf")
+    _out(str(export(p, out, str(args.file))))
+    return 0
+
+
 def cmd_examples(args) -> int:
     copied = paths.copy_examples(overwrite=args.overwrite)
     for path in copied:
@@ -298,6 +308,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-v", "--verbose", action="store_true", help="show decoded fields")
     _add_transport_args(p)
     p.set_defaults(func=cmd_monitor)
+
+    p = sub.add_parser("export", help="export the protocol specification as PDF (or HTML with --out x.html)")
+    p.add_argument("file")
+    p.add_argument("--out", help="output file (default: <file>_specification.pdf next to the protocol)")
+    p.set_defaults(func=cmd_export)
 
     p = sub.add_parser("ports", help="list serial ports and CAN interfaces")
     p.set_defaults(func=cmd_ports)

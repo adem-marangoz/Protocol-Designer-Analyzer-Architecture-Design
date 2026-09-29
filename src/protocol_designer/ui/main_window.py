@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
         dash.new_requested.connect(self.new_protocol)
         dash.open_requested.connect(self.open_dialog)
         dash.open_path_requested.connect(self.open_file)
+        dash.export_requested.connect(self.export_specification)
 
         self.conn_status = QLabel()
         self.statusBar().addPermanentWidget(self.conn_status)
@@ -127,6 +128,8 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         self._action(m, "&Save", self.save, QKeySequence.StandardKey.Save)
         self._action(m, "Save &As…", self.save_as, QKeySequence.StandardKey.SaveAs)
+        m.addSeparator()
+        self._action(m, "&Export Protocol Specification (PDF)…", self.export_specification, "Ctrl+E")
         m.addSeparator()
         self._action(m, "Open My Protocols Folder", lambda: self._open_folder(paths.protocols_dir()))
         self._action(m, "Restore Example Protocols", self._restore_examples)
@@ -258,6 +261,35 @@ class MainWindow(QMainWindow):
         self._save_settings()
         self.statusBar().showMessage(f"Saved {saved}", 5000)
         return True
+
+    def export_specification(self) -> Optional[Path]:
+        """Save the protocol description as a PDF (or HTML) document."""
+        from ..application.protocol_manager import safe_filename
+        from ..application.spec_report import export
+
+        paths.documents_dir().mkdir(parents=True, exist_ok=True)
+        suggested = paths.documents_dir() / f"{safe_filename(self.ctx.protocol.name)}_specification.pdf"
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export protocol specification", str(suggested), "PDF document (*.pdf);;HTML page (*.html)"
+        )
+        if not path:
+            return None
+        if Path(path).suffix.lower() not in (".pdf", ".html", ".htm"):
+            path += ".pdf"
+        source = str(self.ctx.manager.path) if self.ctx.manager.path else None
+        try:
+            saved = export(self.ctx.protocol, path, source)
+        except OSError as exc:
+            QMessageBox.warning(self, "Cannot export", str(exc))
+            return None
+        self.statusBar().showMessage(f"Specification exported to {saved}", 8000)
+        answer = QMessageBox.question(
+            self, "Specification exported", f"The specification was saved to\n{saved}\n\nOpen it now?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(saved)))
+        return saved
 
     def _restore_examples(self) -> None:
         copied = paths.copy_examples(overwrite=False)

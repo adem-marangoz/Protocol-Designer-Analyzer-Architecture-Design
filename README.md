@@ -7,7 +7,8 @@
 - **analyse** raw bytes and **monitor** live traffic on RS485, UART, TCP/UDP, CAN and CAN-FD,
 - **test** devices automatically with PASS/FAIL reports, including multi-step sequences such as
   a bootloader seed/key unlock,
-- **generate** encoder/decoder source code in **C, C++, Python and C#**.
+- **generate** encoder/decoder source code in **C, C++, Python and C#**,
+- **document** it: export a complete, printable **PDF specification** of the protocol.
 
 It is a Windows desktop application with a standard installer: a setup wizard with a license
 agreement and a choice of install folder, and the program appears under *Settings → Apps →
@@ -84,6 +85,7 @@ pdcli test      protocols\tpms_rs485.json --report results --format html     (ex
 pdcli test      protocols\tpms_rs485.json --transport RS485 --port COM3 --baud 115200
 pdcli monitor   protocols\tpms_rs485.json --transport RS485 --port COM3 --seconds 30 -v
 pdcli generate  protocols\tpms_rs485.json --lang c --out generated
+pdcli export    protocols\tpms_rs485.json --out tpms_specification.pdf     (complete PDF specification)
 pdcli crc       CRC16_MODBUS "31 32 33 34 35 36 37 38 39"                 ->  0x4B37
 pdcli ports
 ```

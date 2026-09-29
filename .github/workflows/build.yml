@@ -67,6 +67,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "pdcli validate failed" }
           dist\ProtocolDesigner\pdcli.exe test protocols\ecu_bootloader.json
           if ($LASTEXITCODE -ne 0) { throw "pdcli test failed" }
+          # export on the native Windows platform, as a user would (offscreen has no fonts on Windows)
+          $env:QT_QPA_PLATFORM = $null
+          dist\ProtocolDesigner\pdcli.exe export protocols\tpms_rs485.json --out spec-smoke.pdf
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path spec-smoke.pdf)) { throw "pdcli export failed" }
+          python -c "import pypdf,sys; t=''.join(p.extract_text() for p in pypdf.PdfReader('spec-smoke.pdf').pages); print(len(t), 'characters'); sys.exit(0 if 'READ_SENSOR' in t and 'CRC8' in t else 1)"
+          if ($LASTEXITCODE -ne 0) { throw "the exported PDF has no readable text" }
+          $env:QT_QPA_PLATFORM = "offscreen"
           $p = Start-Process dist\ProtocolDesigner\ProtocolDesigner.exe -ArgumentList "--self-test","protocols\tpms_rs485.json" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "GUI self-test failed with exit code $($p.ExitCode)" }
       - name: Install Inno Setup

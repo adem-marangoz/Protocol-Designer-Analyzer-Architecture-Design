@@ -10,7 +10,7 @@
 ; Requires Inno Setup 6.3 or newer.
 
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.1.0"
 #endif
 #define AppName      "Protocol Designer & Analyzer"
 ; captions of checkboxes treat "&" as a keyboard accelerator: use "&&" there

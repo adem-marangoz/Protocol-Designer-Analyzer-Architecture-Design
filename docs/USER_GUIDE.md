@@ -137,7 +137,26 @@ Choose C, C++, Python or C#, then *Preview* or *Generate files*:
 Structures hold raw values; the scale and offset are provided as constants. The generated code
 handles constants, LENGTH and CRC exactly like the program itself.
 
-## 9. Logs
+## 9. Exporting the protocol specification (PDF)
+
+Use *File → Export Protocol Specification (PDF)…* (`Ctrl+E`) or the Dashboard button
+*Export specification (PDF)…*. Choose a `.pdf` file, or `.html` for a web page. The document
+describes the protocol completely, so it can be handed to firmware developers, testers or
+customers:
+
+- a title page with version, transport, contents and conventions,
+- the transport settings and an overview table of all messages,
+- every enumeration with its values and where it is used,
+- for each message: ID, direction, CAN ID, size and response, a colour-coded **byte layout**,
+  the **field table** (offset, size, type and byte order, encoding, value/rule, scaling, range,
+  unit, enumeration, description), **bit-field** tables, the **LENGTH / CRC rules**, and an
+  **example packet** decoded field by field,
+- the CRC/checksum algorithms with all parameters and their check values,
+- the tests, the device simulator rules and the validation results.
+
+From the command line: `pdcli export protocol.json --out protocol_specification.pdf`.
+
+## 10. Logs
 
 Shows the decoded traffic of this session and the application log, which is useful when
 reporting problems.
