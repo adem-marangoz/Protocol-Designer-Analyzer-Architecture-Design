@@ -1,6 +1,10 @@
 """Protocol specification export (PDF / HTML)."""
 
+import os
+import subprocess
+import sys
 import unicodedata
+from pathlib import Path
 
 import pytest
 
@@ -18,6 +22,24 @@ def pdf_text(path):
     text = "\n".join(page.extract_text() for page in reader.pages)
     # pypdf reports word gaps as tabs and keeps typographic ligatures ("ﬁ")
     return len(reader.pages), unicodedata.normalize("NFKC", text).replace("\t", " ")
+
+
+def export_with_cli(protocol_file, out):
+    """Export exactly like a user: `pdcli export` in its own process, on the native Qt platform.
+
+    The test session forces QT_QPA_PLATFORM=offscreen, which on Windows has no
+    system fonts; the real program never runs that way (on a headless Linux box
+    it selects offscreen by itself, where fonts are available).
+    """
+    env = {k: v for k, v in os.environ.items() if k != "QT_QPA_PLATFORM"}
+    src = str(Path(__file__).resolve().parents[1] / "src")
+    env["PYTHONPATH"] = src + os.pathsep + env.get("PYTHONPATH", "")
+    result = subprocess.run(
+        [sys.executable, "-m", "protocol_designer", "cli", "export", str(protocol_file), "--out", str(out)],
+        capture_output=True, text=True, env=env, timeout=120,
+    )
+    assert result.returncode == 0, result.stderr
+    return Path(out)
 
 
 def test_html_contains_every_part_of_the_protocol(tpms):
@@ -82,10 +104,17 @@ def test_frame_offsets_after_variable_field(protocols_dir):
     assert offs["CRC"] == (None, 1)
 
 
+def test_pdf_export_in_process(tmp_path, tpms):
+    path = export_pdf(tpms, tmp_path / "t.pdf", "tpms_rs485.json")
+    assert path.read_bytes()[:5] == b"%PDF-"
+    pages, _ = pdf_text(path)
+    assert pages >= len(tpms.frames) + 2
+
+
 @pytest.mark.parametrize("name", EXAMPLES)
 def test_pdf_export(tmp_path, protocols_dir, name):
     protocol = load_protocol(protocols_dir / f"{name}.json")
-    path = export_pdf(protocol, tmp_path / f"{name}.pdf", f"{name}.json")
+    path = export_with_cli(protocols_dir / f"{name}.json", tmp_path / f"{name}.pdf")
     assert path.read_bytes()[:5] == b"%PDF-"
     pages, text = pdf_text(path)
     assert pages >= len(protocol.frames) + 2  # title/overview + one page per message + CRC
@@ -95,8 +124,8 @@ def test_pdf_export(tmp_path, protocols_dir, name):
     assert "Checksum / CRC algorithms" in text
 
 
-def test_pdf_text_details(tmp_path, tpms):
-    _, text = pdf_text(export_pdf(tpms, tmp_path / "t.pdf"))
+def test_pdf_text_details(tmp_path, protocols_dir):
+    _, text = pdf_text(export_with_cli(protocols_dir / "tpms_rs485.json", tmp_path / "t.pdf"))
     for needle in ["Sensor State", "0 = SLEEP", "AA 01 10 01 00 8F", "CRC8", "Protocol Specification"]:
         assert needle in text, needle
 
