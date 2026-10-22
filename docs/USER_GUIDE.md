@@ -156,7 +156,29 @@ customers:
 
 From the command line: `pdcli export protocol.json --out protocol_specification.pdf`.
 
-## 10. Logs
+## 10. Exporting the protocol to Excel
+
+Use *File → Export Protocol to Excel…* (`Ctrl+Shift+E`) or the Dashboard button
+*Export to Excel…*. The workbook is easy to search, filter and share. It uses the same colours as
+the PDF: blue for constants, amber for LENGTH, red for CRC and green for data.
+
+| Sheet | Contents |
+| --- | --- |
+| Overview | Summary tiles (messages, fields, enumerations, tests, problems), protocol and transport details, clickable contents, colour legend, and how to read the workbook |
+| Messages | All messages in one filterable table: ID, direction, CAN ID, size, expected response; click a name to open its sheet |
+| Byte maps | Each message drawn byte by byte (16 per line). Each field spans its bytes, and the example packet is shown below in hex |
+| *one sheet per message* | Properties and example packet. The field table shows offset, size, type, byte order, encoding, rule, scale, offset, unit, min/max, enumeration, default, example bytes and decoded value. The bits of a bit field follow it as rows marked ↳. Then the LENGTH/CRC rules |
+| All fields | Every field of every message in one table: use the filter buttons, e.g. to list all CRC fields |
+| Enumerations | Value → name tables and where they are used |
+| CRC | Algorithm parameters and the check value for `"123456789"` |
+| Tests / Simulator | Test steps with their checks, written as readable text; the simulated device's rules |
+| Validation | Problems in the protocol definition, or *No problems found* |
+
+Every sheet has a link back to the overview, and the header rows stay visible while you scroll.
+Each sheet prints in landscape A4, scaled to the page width. From the command line:
+`pdcli export protocol.json --out protocol.xlsx`.
+
+## 11. Logs
 
 Shows the decoded traffic of this session and the application log, which is useful when
 reporting problems.

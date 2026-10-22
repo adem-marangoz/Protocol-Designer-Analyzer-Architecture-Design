@@ -106,3 +106,12 @@ def test_export_specification(capsys, tmp_path, tpms_file):
     assert out.read_bytes()[:4] == b"%PDF"
     code, _, _ = run(capsys, "export", tpms_file, "--out", str(tmp_path / "spec.html"))
     assert code == 0 and "Protocol Specification" in (tmp_path / "spec.html").read_text(encoding="utf-8")
+
+
+def test_export_excel(capsys, tmp_path, tpms_file):
+    from openpyxl import load_workbook
+
+    out = tmp_path / "tpms.xlsx"
+    code, printed, _ = run(capsys, "export", tpms_file, "--out", str(out))
+    assert code == 0 and printed.strip() == str(out)
+    assert "READ_SENSOR" in load_workbook(out).sheetnames

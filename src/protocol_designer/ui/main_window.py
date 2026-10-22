@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
         dash.open_requested.connect(self.open_dialog)
         dash.open_path_requested.connect(self.open_file)
         dash.export_requested.connect(self.export_specification)
+        dash.excel_requested.connect(self.export_excel)
 
         self.conn_status = QLabel()
         self.statusBar().addPermanentWidget(self.conn_status)
@@ -130,6 +131,7 @@ class MainWindow(QMainWindow):
         self._action(m, "Save &As…", self.save_as, QKeySequence.StandardKey.SaveAs)
         m.addSeparator()
         self._action(m, "&Export Protocol Specification (PDF)…", self.export_specification, "Ctrl+E")
+        self._action(m, "Export Protocol to Exce&l…", self.export_excel, "Ctrl+Shift+E")
         m.addSeparator()
         self._action(m, "Open My Protocols Folder", lambda: self._open_folder(paths.protocols_dir()))
         self._action(m, "Restore Example Protocols", self._restore_examples)
@@ -264,27 +266,34 @@ class MainWindow(QMainWindow):
 
     def export_specification(self) -> Optional[Path]:
         """Save the protocol description as a PDF (or HTML) document."""
+        return self._export("specification", "_specification", "PDF document (*.pdf);;HTML page (*.html)",
+                            (".pdf", ".html", ".htm"))
+
+    def export_excel(self) -> Optional[Path]:
+        """Save the protocol as a formatted Excel workbook."""
+        return self._export("Excel workbook", "", "Excel workbook (*.xlsx)", (".xlsx",))
+
+    def _export(self, what: str, stem_suffix: str, filters: str, extensions) -> Optional[Path]:
         from ..application.protocol_manager import safe_filename
         from ..application.spec_report import export
 
         paths.documents_dir().mkdir(parents=True, exist_ok=True)
-        suggested = paths.documents_dir() / f"{safe_filename(self.ctx.protocol.name)}_specification.pdf"
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export protocol specification", str(suggested), "PDF document (*.pdf);;HTML page (*.html)"
-        )
+        suggested = paths.documents_dir() / f"{safe_filename(self.ctx.protocol.name)}{stem_suffix}{extensions[0]}"
+        path, _ = QFileDialog.getSaveFileName(self, f"Export protocol – {what}", str(suggested), filters)
         if not path:
             return None
-        if Path(path).suffix.lower() not in (".pdf", ".html", ".htm"):
-            path += ".pdf"
+        if Path(path).suffix.lower() not in extensions:
+            path += extensions[0]
         source = str(self.ctx.manager.path) if self.ctx.manager.path else None
         try:
             saved = export(self.ctx.protocol, path, source)
-        except OSError as exc:
-            QMessageBox.warning(self, "Cannot export", str(exc))
+        except OSError as exc:  # e.g. the file is open in another program
+            QMessageBox.warning(self, "Cannot export", f"{exc}\n\nClose the file if it is open and try again.")
             return None
-        self.statusBar().showMessage(f"Specification exported to {saved}", 8000)
+        title = f"{what[0].upper()}{what[1:]} exported"
+        self.statusBar().showMessage(f"{title} to {saved}", 8000)
         answer = QMessageBox.question(
-            self, "Specification exported", f"The specification was saved to\n{saved}\n\nOpen it now?",
+            self, title, f"The {what} was saved to\n{saved}\n\nOpen it now?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if answer == QMessageBox.StandardButton.Yes:

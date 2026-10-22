@@ -125,14 +125,15 @@ def frame_size_text(frame: FrameDefinition) -> str:
     except DefinitionError:
         return "invalid"
     fixed = sum(s or 0 for s in sizes)
-    return f"{fixed} bytes" if all(s is not None for s in sizes) else f"{fixed} bytes + variable"
+    text = "1 byte" if fixed == 1 else f"{fixed} bytes"
+    return text if all(s is not None for s in sizes) else f"{text} + variable"
 
 
 def _field_name(frame: FrameDefinition, index: int) -> str:
     return frame.fields[index].name if 0 <= index < len(frame.fields) else "?"
 
 
-def _range_text(frame: FrameDefinition, start: int, end: int) -> str:
+def range_text(frame: FrameDefinition, start: int, end: int) -> str:
     if start > end:
         return "no fields"
     if start == end:
@@ -140,7 +141,7 @@ def _range_text(frame: FrameDefinition, start: int, end: int) -> str:
     return f"{_field_name(frame, start)} … {_field_name(frame, end)}"
 
 
-def _type_text(f: FieldDefinition, size: Optional[int], protocol: ProtocolDefinition) -> str:
+def type_text(f: FieldDefinition, size: Optional[int], protocol: ProtocolDefinition) -> str:
     """Type, plus the byte order for multi-byte numbers (BE = big endian, LE = little endian)."""
     if f.type in (FieldType.BYTES, FieldType.STRING):
         return f"{f.type.value}[{size}]" if size else f"{f.type.value}[var]"
@@ -150,14 +151,14 @@ def _type_text(f: FieldDefinition, size: Optional[int], protocol: ProtocolDefini
     return text
 
 
-def _rule_text(frame: FrameDefinition, index: int, f: FieldDefinition) -> str:
-    """Human readable rule for the Value / Rule column."""
+def rule_text(frame: FrameDefinition, index: int, f: FieldDefinition) -> str:
+    """Plain-text rule for a field: constant value, what LENGTH counts, what CRC covers, scaling, range..."""
     if f.encoding == Encoding.CONSTANT:
-        return f"constant = {e(f.value)}"
+        return f"constant = {f.value}"
     if f.encoding == Encoding.LENGTH:
         try:
             start, end = length_range(frame, index)
-            text = f"length of {e(_range_text(frame, start, end))}"
+            text = f"length of {range_text(frame, start, end)}"
         except KeyError:
             text = "length (invalid range)"
         if f.length_adjust:
@@ -170,9 +171,9 @@ def _rule_text(frame: FrameDefinition, index: int, f: FieldDefinition) -> str:
             alg = "unknown CRC"
         try:
             start, end = crc_range(frame, index)
-            return f"{e(alg)} over {e(_range_text(frame, start, end))}"
+            return f"{alg} over {range_text(frame, start, end)}"
         except KeyError:
-            return f"{e(alg)} (invalid range)"
+            return f"{alg} (invalid range)"
     parts = []
     if f.enum is not None:
         parts.append(f"enum {f.enum}" if isinstance(f.enum, str) else
@@ -184,10 +185,10 @@ def _rule_text(frame: FrameDefinition, index: int, f: FieldDefinition) -> str:
     if f.unit:
         parts.append(f"unit {f.unit}")
     if f.default is not None:
-        parts.append(f"default {e(f.default)}")
+        parts.append(f"default {f.default}")
     if f.is_variable and covering_length_field(frame, index) is None:
         parts.append("size = remaining bytes")
-    return "; ".join(e(p) for p in parts)
+    return "; ".join(parts)
 
 
 # --------------------------------------------------------------- sections ---
@@ -329,17 +330,17 @@ def _frame_section(protocol: ProtocolDefinition, frame: FrameDefinition, number:
     rows = []
     for i, (f, offset, size) in enumerate(offsets):
         try:
-            type_text = _type_text(f, size, protocol)
+            type_label = type_text(f, size, protocol)
         except DefinitionError:
-            type_text = f.type.value
+            type_label = f.type.value
         rows.append([
             str(i + 1),
             f'<span style="background-color:{ENCODING_COLORS.get(f.encoding, "#fff")}">&nbsp;<b>{e(f.name)}</b>&nbsp;</span>',
             e("" if offset is None else offset),
             e("var" if size is None else size),
-            e(type_text),
+            e(type_label),
             e(f.encoding.value),
-            _rule_text(frame, i, f),
+            e(rule_text(frame, i, f)),
             e(f.description),
         ])
     parts.append(_table(
@@ -373,7 +374,7 @@ def _frame_section(protocol: ProtocolDefinition, frame: FrameDefinition, number:
         if f.encoding == Encoding.LENGTH:
             try:
                 start, end = length_range(frame, i)
-                rules.append(f"<li><b>{e(f.name)}</b> = number of bytes of {e(_range_text(frame, start, end))}"
+                rules.append(f"<li><b>{e(f.name)}</b> = number of bytes of {e(range_text(frame, start, end))}"
                              + (f" {f.length_adjust:+d}" if f.length_adjust else "") + ".</li>")
             except KeyError:
                 pass
@@ -382,7 +383,7 @@ def _frame_section(protocol: ProtocolDefinition, frame: FrameDefinition, number:
                 alg = crc_algorithm(f)
                 start, end = crc_range(frame, i)
                 rules.append(f"<li><b>{e(f.name)}</b> = {e(alg.name)} computed over the bytes of "
-                             f"{e(_range_text(frame, start, end))} (see section 'Checksum / CRC algorithms').</li>")
+                             f"{e(range_text(frame, start, end))} (see section 'Checksum / CRC algorithms').</li>")
             except (DefinitionError, KeyError):
                 pass
     for i, f in enumerate(frame.fields):
@@ -655,7 +656,12 @@ def export_pdf(protocol: ProtocolDefinition, path: Union[str, Path], source: Opt
 
 
 def export(protocol: ProtocolDefinition, path: Union[str, Path], source: Optional[str] = None) -> Path:
-    """Export as PDF or HTML depending on the file extension."""
-    if Path(path).suffix.lower() in (".html", ".htm"):
+    """Export as PDF, HTML or an Excel workbook depending on the file extension."""
+    suffix = Path(path).suffix.lower()
+    if suffix in (".html", ".htm"):
         return export_html(protocol, path, source)
+    if suffix == ".xlsx":
+        from .excel_export import export_xlsx  # imports this module
+
+        return export_xlsx(protocol, path, source)
     return export_pdf(protocol, path, source)

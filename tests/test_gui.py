@@ -489,3 +489,25 @@ def test_export_specification_from_gui(window, dialogs, tmp_path):
     assert "Export specification (PDF)…" in dash.action_buttons
     dialogs.save_path = ""  # cancelled dialog
     assert window.export_specification() is None
+
+
+def test_export_excel_from_gui(window, dialogs, tmp_path):
+    from openpyxl import load_workbook
+
+    target = tmp_path / "exports" / "tpms"
+    dialogs.save_path = str(target)  # no extension: .xlsx is added
+    dialogs.question_answer = QMessageBox.StandardButton.No
+    saved = window.export_excel()
+    assert saved == target.with_suffix(".xlsx")
+    wb = load_workbook(saved)
+    assert wb.sheetnames[:3] == ["Overview", "Messages", "Byte maps"] and "SENSOR_DATA" in wb.sheetnames
+    assert any(m[1] == "Excel workbook exported" for m in dialogs.messages)
+    assert "Export to Excel…" in window.pages["dashboard"].action_buttons
+    menu = [a.text() for a in window.menuBar().actions()[0].menu().actions()]
+    assert "Export Protocol to Exce&l…" in menu
+    # the file cannot be written (e.g. it is open in Excel): a warning, no crash
+    blocked = tmp_path / "blocked.xlsx"
+    blocked.mkdir()  # a directory cannot be written as a file
+    dialogs.save_path = str(blocked)
+    assert window.export_excel() is None
+    assert any(m[0] == "warning" and m[1] == "Cannot export" for m in dialogs.messages)
