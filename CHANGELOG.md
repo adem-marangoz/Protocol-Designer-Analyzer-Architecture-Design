@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.0
+
+- **Export the protocol to Excel (.xlsx).** *File → Export Protocol to Excel…* (`Ctrl+Shift+E`),
+  the Dashboard button *Export to Excel…*, or `pdcli export protocol.json --out protocol.xlsx`.
+  The workbook is formatted for reading and uses the same colours as the PDF:
+  - **Overview**: summary tiles, protocol and transport details, clickable contents, a colour
+    legend and a short "how to read" guide.
+  - **Messages**: one filterable table with ID, direction, CAN ID, size and response.
+  - **Byte maps**: every message drawn byte by byte, with fields coloured by encoding and an example
+    packet.
+  - **One sheet per message**: properties, the example packet, and the field table (offset, size,
+    type, byte order, encoding, rule, scaling, range, unit, enumeration, default, example bytes and
+    value). The bits of each bit field appear as indented rows, followed by the LENGTH/CRC rules.
+  - **All fields, Enumerations, CRC, Tests, Simulator and Validation** sheets.
+  - Every sheet links back to the overview. Headers are frozen, and every sheet prints in
+    landscape at page width.
+- Single-byte frames are described as "1 byte".
+
 ## 1.1.0
 
 - **Protocol specification export (PDF / HTML).** *File → Export Protocol Specification (PDF)…*

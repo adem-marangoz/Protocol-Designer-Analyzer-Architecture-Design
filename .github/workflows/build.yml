@@ -73,6 +73,10 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or -not (Test-Path spec-smoke.pdf)) { throw "pdcli export failed" }
           python -c "import pypdf,sys; t=''.join(p.extract_text() for p in pypdf.PdfReader('spec-smoke.pdf').pages); print(len(t), 'characters'); sys.exit(0 if 'READ_SENSOR' in t and 'CRC8' in t else 1)"
           if ($LASTEXITCODE -ne 0) { throw "the exported PDF has no readable text" }
+          dist\ProtocolDesigner\pdcli.exe export protocols\tpms_rs485.json --out spec-smoke.xlsx
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path spec-smoke.xlsx)) { throw "pdcli export to Excel failed" }
+          python -c "import openpyxl,sys; wb=openpyxl.load_workbook('spec-smoke.xlsx'); print(wb.sheetnames); sys.exit(0 if 'SENSOR_DATA' in wb.sheetnames and wb['Overview']['A1'].value == 'TPMS RS485 Protocol' else 1)"
+          if ($LASTEXITCODE -ne 0) { throw "the exported workbook is incomplete" }
           $env:QT_QPA_PLATFORM = "offscreen"
           $p = Start-Process dist\ProtocolDesigner\ProtocolDesigner.exe -ArgumentList "--self-test","protocols\tpms_rs485.json" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "GUI self-test failed with exit code $($p.ExitCode)" }

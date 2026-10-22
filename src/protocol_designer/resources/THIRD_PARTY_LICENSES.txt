@@ -36,6 +36,12 @@ wrapt, typing_extensions, packaging, msgpack (python-can dependencies)
   https://pypi.org/
 
 ------------------------------------------------------------------------
+openpyxl, et_xmlfile (Excel export)
+  Copyright (c) 2010 openpyxl; Copyright (c) 2010-2015 et_xmlfile
+  License: MIT
+  https://foss.heptapod.net/openpyxl/openpyxl/-/blob/branch/3.1/LICENCE.rst
+
+------------------------------------------------------------------------
 PyInstaller bootloader
   License: GPL-2.0 with a special exception that allows distributing
   bundled applications under any license.

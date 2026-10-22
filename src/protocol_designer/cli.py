@@ -309,9 +309,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_transport_args(p)
     p.set_defaults(func=cmd_monitor)
 
-    p = sub.add_parser("export", help="export the protocol specification as PDF (or HTML with --out x.html)")
+    p = sub.add_parser("export", help="export the protocol as a PDF specification, an HTML page (--out x.html) "
+                                      "or an Excel workbook (--out x.xlsx)")
     p.add_argument("file")
-    p.add_argument("--out", help="output file (default: <file>_specification.pdf next to the protocol)")
+    p.add_argument("--out", help="output file; the extension .pdf, .html or .xlsx selects the format "
+                                 "(default: <file>_specification.pdf next to the protocol)")
     p.set_defaults(func=cmd_export)
 
     p = sub.add_parser("ports", help="list serial ports and CAN interfaces")

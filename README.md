@@ -8,7 +8,8 @@
 - **test** devices automatically with PASS/FAIL reports, including multi-step sequences such as
   a bootloader seed/key unlock,
 - **generate** encoder/decoder source code in **C, C++, Python and C#**,
-- **document** it: export a complete, printable **PDF specification** of the protocol.
+- **document** it: export a complete, printable **PDF specification** or a formatted **Excel
+  workbook** of the protocol.
 
 It is a Windows desktop application with a standard installer: a setup wizard with a license
 agreement and a choice of install folder, and the program appears under *Settings → Apps →
@@ -86,6 +87,7 @@ pdcli test      protocols\tpms_rs485.json --transport RS485 --port COM3 --baud 1
 pdcli monitor   protocols\tpms_rs485.json --transport RS485 --port COM3 --seconds 30 -v
 pdcli generate  protocols\tpms_rs485.json --lang c --out generated
 pdcli export    protocols\tpms_rs485.json --out tpms_specification.pdf     (complete PDF specification)
+pdcli export    protocols\tpms_rs485.json --out tpms.xlsx                   (formatted Excel workbook)
 pdcli crc       CRC16_MODBUS "31 32 33 34 35 36 37 38 39"                 ->  0x4B37
 pdcli ports
 ```
@@ -143,13 +145,13 @@ signtool sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 /a <file.e
 QT_QPA_PLATFORM=offscreen python -m pytest -q
 ```
 
-About 330 tests cover each layer:
+About 380 tests cover each layer:
 
 | Layer | What is verified |
 | --- | --- |
 | Protocol engine | every field type in both byte orders, scaling, enums, bit fields, variable-length fields, the 18 CRC algorithms against their standard check values, encoder, decoder, stream frame detection with resynchronisation, validator, JSON load/save round-trips |
 | Transports | serial via `loop://`, RS485 echo suppression, TCP client/server, UDP, CAN and CAN-FD on the python-can virtual bus, loopback, device simulator |
-| Application | live session, test engine (checks, timeouts, CRC failures, variables, cancel, reports), builder, analyzer, protocol manager, settings, logs, CLI |
+| Application | live session, test engine (checks, timeouts, CRC failures, variables, cancel, reports), builder, analyzer, protocol manager, settings, logs, CLI, PDF and Excel export |
 | Code generator | the generated **C, C++, Python and C#** is compiled/run and must encode and decode every example message **byte for byte** like the engine, and reject corrupted CRCs |
 | GUI | every page driven offscreen with pytest-qt: editing, building, analysing, connecting, running tests, generating code, saving |
 
